@@ -6,7 +6,7 @@ use Test;
 BEGIN {
     chdir 't' if -d 't';
     unshift @INC, '../blib/lib';
-    plan tests => 19;
+    plan tests => 22;
 }
 
 use HTML::TokeParser::Simple;
@@ -33,6 +33,9 @@ ok( $token->is_text, 1 );
 
 $token = $p->get_token;
 ok( $token->is_end_tag( 'title' ) );
+ok( $token->is_end_tag( 'TITLE' ) );
+ok( $token->is_end_tag( '/title' ) );
+ok( $token->is_end_tag );
 
 $token = $p->get_token for ( 1..2 );
 ok( $token->is_process_instruction, 1 );

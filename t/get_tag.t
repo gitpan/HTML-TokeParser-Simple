@@ -6,7 +6,7 @@ use Test;
 BEGIN {
     chdir 't' if -d 't';
     unshift @INC, '../blib/lib';
-    plan tests => 19;
+    plan tests => 24;
 }
 
 use HTML::TokeParser::Simple;
@@ -20,6 +20,8 @@ my $old_token = copy_array( $token );
 ok( $token->is_declaration, '' );
 ok( arrays_equal( $old_token, $token ), 1 );
 ok( $token->is_start_tag( 'html' ), 1 );
+ok( $token->is_tag( 'html' ), 1 );
+ok( $token->is_tag, 1 );
 ok( $token->return_tag, 'html' );
 ok( $token->is_start_tag( 'fake tag' ), '' );
 
@@ -34,6 +36,9 @@ $token = $p->get_tag;
 # get_token, which doesn't require the backslash.
 
 ok( $token->is_end_tag( '/title' ), 1 );
+ok( $token->is_end_tag( 'title' ), 1 );
+ok( $token->is_end_tag( 'TITLE' ), 1 );
+ok( $token->is_end_tag, 1 );
 
 $token = $p->get_tag for 1..2;
 $old_token = copy_array( $token );

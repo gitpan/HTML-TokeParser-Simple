@@ -5,7 +5,7 @@ use strict;
 use Carp;
 use HTML::TokeParser;
 use vars qw/ @ISA $VERSION $AUTOLOAD /;
-$VERSION = '1.2';
+$VERSION = '1.3';
 @ISA = qw/ HTML::TokeParser /;
 
 use constant GET_TAG     => 1;
@@ -126,6 +126,11 @@ sub is_comment {
 	return $self->_is( COMMENT );
 }
 
+sub is_tag {
+	my $self = shift;
+	return $self->is_start_tag( @_ ) || $self->is_end_tag( @_ );
+}
+
 sub is_start_tag {
 	my ( $self, $method ) = _synch_arrays( shift );
 	my $tag = shift || '';
@@ -138,17 +143,17 @@ sub is_end_tag {
 	return $self->_start_end_handler( END_TAG, $tag );
 }
 
+# private methods
+
 sub _start_end_handler {
-	my ( $self, $method ) = _synch_arrays( shift );
-	my $requested_type = shift;
-	my $tag = shift;
+	my ( $self, $requested_type, $tag ) = @_;
 	my $result = $self->_is( $requested_type );
 	return $result if ! $tag or ! $result;
-	return lc $tag eq $self->[$token{ $requested_type }{ tag }];
-	
+	$tag = lc $tag;
+	# strip leading / if they supplied it
+	$tag =~ s{^/}{};
+	return $self->[$token{ $requested_type }{ tag }] =~ m{^/?$tag$};
 }
-
-# private methods
 
 sub _is {
 	my ( $self, $method ) = _synch_arrays( shift );
@@ -198,6 +203,7 @@ sub _synch_arrays {
 	return ( $array_ref, $tag_func );
 }
 
+1;
 __END__
 
 =head1 NAME
@@ -209,7 +215,7 @@ HTML::TokeParser::Simple - easy to use HTML::TokeParser interface
  use HTML::TokeParser::Simple;
  my $p = HTML::TokeParser::Simple->new( $somefile );
 
- while ( my $token = $parser->get_token ) {
+ while ( my $token = $p->get_token ) {
      # This prints all text in an HTML doc (i.e., it strips the HTML)
      next if ! $token->is_text;
      print $token->return_text;
@@ -230,7 +236,7 @@ tokens returned are not exactly intuitive to parse:
 
 To simplify this, C<HTML::TokeParser::Simple> allows the user ask more
 intuitive (read: more self-documenting) questions about the tokens returned.
-Specifically, there are 6 C<is_foo> type methods and 5 C<return_bar> type
+Specifically, there are 7 C<is_foo> type methods and 5 C<return_bar> type
 methods.  The C<is_> methods allow you to determine the token type and the
 C<return_> methods get the data that you need.
 
@@ -245,7 +251,7 @@ examples.
 
 =over 4
 
-=item 1 C<is_start_tag>
+=item * C<is_start_tag>
 
 Use this to determine if you have a start tag.  An optional "tag type" may be
 passed.  This will allow you to match if it's a I<particular> start tag.  The
@@ -253,37 +259,39 @@ supplied tag is case-insensitive.
 
  if ( $token->is_start_tag( 'font' ) ) { ... }
 
-=item 2 C<is_end_tag.>
+=item * C<is_end_tag.>
 
 Use this to determine if you have an end tag.  An optional "tag type" may be
 passed.  This will allow you to match if it's a I<particular> end tag.  The
 supplied tag is case-insensitive.
 
-B<Note>:  due to the way that C<HTML::TokeParser> handles tags, the
-C<is_end_tag> method for tokens returned with the C<get_tag()> method will have
-end tags with a forward slash on the front (e.g. C</a>), whereas tokens
-returned by the C<get_token()> method will not have this slash.  I considered
-making them the same, but decided to stick with the original format so as to
-avoid confusion.  This is a bit confusing, though, and it may change in future 
-versions.
+When testing for an end tag, the forward slash on the tag is optional.
 
  while ( $token = $p->get_token ) {
    if ( $token->is_end_tag( 'form' ) ) { ... }
  }
 
- # or
+Or:
 
- while ( $token = $p->get_tag ) {
+ while ( $token = $p->get_token ) {
    if ( $token->is_end_tag( '/form' ) ) { ... }
  }
 
-=item 3 C<is_text>
+=item * C<is_tag>
+
+Use this to determine if you have any tag.  An optional "tag type" may be
+passed.  This will allow you to match if it's a I<particular> tag.  The
+supplied tag is case-insensitive.
+
+ if ( $token->is_tag ) { ... }
+
+=item * C<is_text>
 
 Use this to determine if you have text.  Note that this is I<not> to be
 confused with the C<return_text> method described below!  C<is_text> will
 identify text that the user typically sees display in the Web browser.
 
-=item 4 C<is_comment>
+=item * C<is_comment>
 
 Are you still reading this?  Nobody reads POD.  Don't you know you're supposed
 to go to CLPM, ask a question that's answered in the POD and get flamed?  It's
@@ -294,12 +302,12 @@ Really.
 C<is_comment> is used to identify comments.  See the HTML::Parser documentation
 for more information about comments.  There's more than you might think.
 
-=item 5 C<is_declaration>
+=item * C<is_declaration>
 
 This will match the DTD at the top of your HTML. (You I<do> use DTD's, don't
 you?)
 
-=item 6 C<is_process_instruction>
+=item * C<is_process_instruction>
 
 Process Instructions are from XML.  This is very handy if you need to parse out
 PHP and similar things with a parser.
@@ -321,25 +329,25 @@ C<return_> part.
 
 =over 4
 
-=item 1 C<return_tag>
+=item * C<return_tag>
 
 Do you have a start tag or end tag?  This will return the type (lower case).
 
-=item 2 C<return_attr>
+=item * C<return_attr>
 
 If you have a start tag, this will return a hash ref with the attribute names
 as keys and the values as the values.
 
-=item 3 C<return_attrseq>
+=item * C<return_attrseq>
 
 For a start tag, this is an array reference with the sequence of the
 attributes, if any.
 
-=item 4 C<return_text>
+=item * C<return_text>
 
 This is the exact text of whatever the token is representing.
 
-=item 5 C<return_token0>
+=item * C<return_token0>
 
 For processing instructions, this will return the token found immediately after
 the opening tag.  Example:  For <?php, "php" will be the start of the returned
@@ -458,25 +466,14 @@ Curtis "Ovid" Poe L<poec@yahoo.com>
 
 =head1 BUGS
 
-2001/10/04 There are no known bugs at this time.
-
 Use of C<$HTML::Parser::VERSION> which is less than 3.25 may result in
 incorrect behavior as older versions do not always handle XHTML correctly.  It
 is the programmer's responsibility to verify that the behavior of this code
 matches the programmer's needs.
 
 Address bug reports and comments to: L<poec@yahoo.com>.  When sending bug
-reports, please provide the version of HTML::Parser, HTML::TokeParser,
-HTML::TokeParser::Simple, the version of Perl, and the version of the operating
-system you are using.
-
-=head1 BUGS
-
-2001/10/04 There are no known bugs at this time.
-
-Use of C<$HTML::Parser::VERSION> which is less than 3.25 may result in
-incorrect behavior as older versions do not always handle XHTML correctly.  It
-is the programmer's responsibility to verify that the behavior of this code
-matches the programmer's needs.
+reports, please provide the version of C<HTML::Parser>, C<HTML::TokeParser>,
+C<HTML::TokeParser::Simple>, the version of Perl, and the version of the
+operating system you are using.
 
 =cut
