@@ -4,7 +4,7 @@ use strict;
 use Carp;
 use HTML::TokeParser;
 use vars qw/ @ISA $VERSION $AUTOLOAD /;
-$VERSION = '2.0';
+$VERSION = '2.1';
 @ISA = qw/ HTML::TokeParser /;
 
 use constant TOKEN_CLASS => 'HTML::TokeParser::Simple::Token';
@@ -12,19 +12,19 @@ use constant TOKEN_CLASS => 'HTML::TokeParser::Simple::Token';
 # constructors
 
 sub get_token {
-	my $self = shift;
-	my ( @args ) = @_;
-	my $token = $self->SUPER::get_token( @args );
-	return unless defined $token;
-	bless $token, TOKEN_CLASS;
+    my $self = shift;
+    my ( @args ) = @_;
+    my $token = $self->SUPER::get_token( @args );
+    return unless defined $token;
+    bless $token, TOKEN_CLASS;
 }
 
 sub get_tag {
-	my $self = shift;
-	my ( @args ) = @_;
-	my $token = $self->SUPER::get_tag( @args );
-	return unless defined $token;
-	bless $token, TOKEN_CLASS;
+    my $self = shift;
+    my ( @args ) = @_;
+    my $token = $self->SUPER::get_tag( @args );
+    return unless defined $token;
+    bless $token, TOKEN_CLASS;
 }
 
 package HTML::TokeParser::Simple::Token;
@@ -39,237 +39,239 @@ use constant DECLARATION => 'D';
 use constant PROCESS_INSTRUCTION => 'PI';
 
 my %token = (
-	S => {
-		_name   => 'START_TAG',
-		tag     => 1,
-		attr    => 2,
-		attrseq => 3,
-		text    => 4
-	},
-	E => {
-		_name => 'END_TAG',
-		tag   => 1,
-		text  => 2
-	},
-	T => {
-		_name => 'TEXT',
-		text  => 1
-	},
-	C => {
-		_name => 'COMMENT',
-		text  => 1
-	},
-	D => {
-		_name => 'DECLARATION',
-		text  => 1
-	},
-	PI => {
-		_name  => 'PROCESS_INSTRUCTION',
-		token0 => 1,
-		text   => 2
-	}
+    S => {
+        _name   => 'START_TAG',
+        tag     => 1,
+        attr    => 2,
+        attrseq => 3,
+        text    => 4
+    },
+    E => {
+        _name => 'END_TAG',
+        tag   => 1,
+        text  => 2
+    },
+    T => {
+        _name => 'TEXT',
+        text  => 1
+    },
+    C => {
+        _name => 'COMMENT',
+        text  => 1
+    },
+    D => {
+        _name => 'DECLARATION',
+        text  => 1
+    },
+    PI => {
+        _name  => 'PROCESS_INSTRUCTION',
+        token0 => 1,
+        text   => 2
+    }
 );
 
 # attribute munging methods
 
 sub set_attr {
-  my ($self, $name, $value) = @_;
-  $name = lc $name;
-  unless ($self->is_start_tag) {
-    require Carp;
-    Carp::croak('set_attr() may only be called on start tags');
-  }
-  my $attr    = $self->return_attr;
-  my $attrseq = $self->return_attrseq;
-  unless (exists $attr->{$name}) {
-    push @$attrseq => $name;
-  }
-  $attr->{$name} = $value;
-  $self->_rewrite_tag;
+    my ($self, $name, $value) = @_;
+    $name = lc $name;
+    unless ($self->is_start_tag) {
+        require Carp;
+        Carp::croak('set_attr() may only be called on start tags');
+    }
+    my $attr        = $self->return_attr;
+    my $attrseq = $self->return_attrseq;
+    unless (exists $attr->{$name}) {
+        push @$attrseq => $name;
+    }
+    $attr->{$name} = $value;
+    $self->rewrite_tag;
 }
 
-sub _rewrite_tag {
-  my $self    = shift;
-  my $attr    = $self->return_attr;
-  my $attrseq = $self->return_attrseq;
+sub rewrite_tag {
+    my $self        = shift;
+    return $self unless $self->is_tag;
+    my $attr        = $self->return_attr;
+    my $attrseq = $self->return_attrseq;
 
-	my $type = $self->[0];
-  # capture the final slash if the tag is self-closing
-	my ($self_closing) = $self->[ $token{ $type }{ text } ] =~ m{(\s?/)>$};
-  $self_closing ||= '';
-  
-  my $tag = '';
-  foreach ( @$attrseq ) {
-    next if $_ eq '/'; # is this a bug in HTML::TokeParser?
-    $tag .= sprintf qq{ %s="%s"}, $_, $attr->{$_};
-  }
-  $tag = sprintf '<%s%s%s>', $self->return_tag, $tag, $self_closing;
-	$self->[ $token{ $type }{ text } ] = $tag;
-  $self;
+    my $type = $self->[0];
+    # capture the final slash if the tag is self-closing
+    my ($self_closing) = $self->[ $token{ $type }{ text } ] =~ m{(\s?/)>$};
+    $self_closing ||= '';
+    
+    my $tag = '';
+    foreach ( @$attrseq ) {
+        next if $_ eq '/'; # is this a bug in HTML::TokeParser?
+        $tag .= sprintf qq{ %s="%s"}, $_, $attr->{$_};
+    }
+    my $first = $self->is_end_tag ? '/' : '';
+    $tag = sprintf '<%s%s%s%s>', $first, $self->return_tag, $tag, $self_closing;
+    $self->[ $token{ $type }{ text } ] = $tag;
+    $self;
 }
 
 sub delete_attr {
-  my ($self,$name) = @_;
-  $name = lc $name;
-  unless ($self->is_start_tag) {
-    require Carp;
-    Carp::croak('set_attr() may only be called on start tags');
-  }
-  my $attr       = $self->return_attr;
-  return unless exists $attr->{$name};
-  delete $attr->{$name};
-  my $attrseq    = $self->return_attrseq;
-  @$attrseq = grep { $_ ne $name } @$attrseq;
-  $self->_rewrite_tag;
+    my ($self,$name) = @_;
+    $name = lc $name;
+    unless ($self->is_start_tag) {
+        require Carp;
+        Carp::croak('set_attr() may only be called on start tags');
+    }
+    my $attr = $self->return_attr;
+    return unless exists $attr->{$name};
+    delete $attr->{$name};
+    my $attrseq = $self->return_attrseq;
+    @$attrseq = grep { $_ ne $name } @$attrseq;
+    $self->rewrite_tag;
 }
 
 # return_foo methods
 
 sub as_is {
-	my ( $self, $method ) = _synch_arrays( shift );
-	my $type = $self->[0];
-	my $text = $self->[ $token{ $type }{ text } ];
-	shift @$self if $method == GET_TAG;
-	return $text;
+    my ( $self, $method ) = _synch_arrays( shift );
+    my $type = $self->[0];
+    my $text = $self->[ $token{ $type }{ text } ];
+    shift @$self if $method == GET_TAG;
+    return $text;
 }
 
 sub return_text {
-  require Carp;
-  Carp::carp('return_text() is deprecated.  Use as_is() instead');
-	goto &as_is;
+    require Carp;
+    Carp::carp('return_text() is deprecated.  Use as_is() instead');
+    goto &as_is;
 }
 
 sub return_tag {
-	my $self = shift;
-	if ( $self->_is( START_TAG ) or $self->_is( END_TAG ) ) {
-		my $type = $self->[0];
-		return $self->[ $token{ $type }{ tag } ];
-	}
-	return '';
+    my $self = shift;
+    if ( $self->_is( START_TAG ) or $self->_is( END_TAG ) ) {
+        my $type = $self->[0];
+        return $self->[ $token{ $type }{ tag } ];
+    }
+    return '';
 }
 
 sub return_token0 {
-	my $self = shift;
-	if ( $self->is_process_instruction ) {
-		return $self->[ $token{ +PROCESS_INSTRUCTION }{ token0 } ];
-	}
-	return '';
+    my $self = shift;
+    if ( $self->is_process_instruction ) {
+        return $self->[ $token{ +PROCESS_INSTRUCTION }{ token0 } ];
+    }
+    return '';
 }
 
 sub return_attr {
-	my $self = shift;
-	$self->_attr_handler( 'attr' );
+    my $self = shift;
+    $self->_attr_handler( 'attr', {} );
 }
 
 sub return_attrseq {
-	my $self = shift;
-	$self->_attr_handler( 'attrseq' );
+    my $self = shift;
+    $self->_attr_handler( 'attrseq', [] );
 }
 
 # is_foo methods
 
 sub is_declaration {
-	my $self = shift;
-	return $self->_is( DECLARATION );
+    my $self = shift;
+    return $self->_is( DECLARATION );
 }
 
 sub is_text {
-	my $self = shift;
-	return $self->_is( TEXT );
+    my $self = shift;
+    return $self->_is( TEXT );
 }
 
 sub is_process_instruction {
-	my $self = shift;
-	return $self->_is( PROCESS_INSTRUCTION );
+    my $self = shift;
+    return $self->_is( PROCESS_INSTRUCTION );
 }
 
 sub is_comment {
-	my $self = shift;
-	return $self->_is( COMMENT );
+    my $self = shift;
+    return $self->_is( COMMENT );
 }
 
 sub is_tag {
-	my $self = shift;
-	return $self->is_start_tag( @_ ) || $self->is_end_tag( @_ );
+    my $self = shift;
+    return $self->is_start_tag( @_ ) || $self->is_end_tag( @_ );
 }
 
 sub is_start_tag {
-	my ($self) = _synch_arrays( shift );
-	return $self->_start_end_handler( START_TAG, @_ );
+    my ($self) = _synch_arrays( shift );
+    return $self->_start_end_handler( START_TAG, @_ );
 }
 
 sub is_end_tag {
-	my ($self) = _synch_arrays( shift );
-	return $self->_start_end_handler( END_TAG, @_ );
+    my ($self) = _synch_arrays( shift );
+    return $self->_start_end_handler( END_TAG, @_ );
 }
 
 # private methods
 
 sub _start_end_handler {
-	my ( $self, $requested_type, $tag ) = @_;
-  $tag ||= '';
-	my $result = $self->_is( $requested_type );
-	return $result if ! $tag or ! $result;
-  if ( 'Regexp' eq ref $tag ) {
-	  return $self->[$token{ $requested_type }{ tag }] =~ $tag;
-  }
-  else {
-  	$tag = lc $tag;
-	  # strip leading / if they supplied it
-  	$tag =~ s{^/}{};
-	  return $self->[$token{ $requested_type }{ tag }] =~ m{^/?$tag$};
-  }
+    my ( $self, $requested_type, $tag ) = @_;
+    $tag ||= '';
+    my $result = $self->_is( $requested_type );
+    return $result if ! $tag or ! $result;
+    if ( 'Regexp' eq ref $tag ) {
+        return $self->[$token{ $requested_type }{ tag }] =~ $tag;
+    }
+    else {
+        $tag = lc $tag;
+        # strip leading / if they supplied it
+        $tag =~ s{^/}{};
+        return $self->[$token{ $requested_type }{ tag }] =~ m{^/?$tag$};
+    }
 }
 
 sub _is {
-	my ( $self, $method ) = _synch_arrays( shift );
-	my $type   = shift;
-	my $result = $self->[0] eq $type;
-	# if token was created with something like $p->get_tag, then we
-	# unshifted the tag type on the array to synchronize indices with
-	# return value of $p->get_token
-	shift @$self if $method == GET_TAG;
-	return $result;
+    my ( $self, $method ) = _synch_arrays( shift );
+    my $type   = shift;
+    my $result = $self->[0] eq $type;
+    # if token was created with something like $p->get_tag, then we
+    # unshifted the tag type on the array to synchronize indices with
+    # return value of $p->get_token
+    shift @$self if $method == GET_TAG;
+    return $result;
 }
 
 sub _attr_handler {
-	my ( $self, $method ) = _synch_arrays( shift );
-	my $request = shift;
-	my $attr = {};
-	if ( $self->_is( START_TAG ) ) {
-		$attr = $self->[ $token{ +START_TAG }{ $request } ];
-	}
-	shift @$self if $method == GET_TAG;
-	return $attr;
+    my ( $self, $method, $attr ) = _synch_arrays( shift );
+    my $request = shift;
+    if ( $self->_is( START_TAG ) ) {
+        $attr = $self->[ $token{ +START_TAG }{ $request } ];
+    }
+    shift @$self if $method == GET_TAG;
+    return $attr;
 }
 
 sub _synch_arrays {
-	# if the method is called from a token generated by the get_tag() method,
-	# the returned array reference will be identical to a start or end tag
-	# token returned by get_token() *except* the first element in the reference
-	# will not be an identifier like 'S' or 'E'
-	
-	my $array_ref = shift;
-	my $tag_func  = GET_TOKEN;
+    # if the method is called from a token generated by the get_tag() method,
+    # the returned array reference will be identical to a start or end tag
+    # token returned by get_token() *except* the first element in the reference
+    # will not be an identifier like 'S' or 'E'
+    
+    my $array_ref = shift;
+    my $tag_func  = GET_TOKEN;
 
-	unless ( grep { $array_ref->[0] eq $_ } keys %token ) {
-		# created with get_tag() method, so we need
-		# to munge the array to match the get_token() array
-		# After this is called, and before the method returns, you must
-		# use something like the following:
-		# shift @$self if $method == GET_TAG;
-		$tag_func = GET_TAG;
-		if ( '/' ne substr $array_ref->[0], 0, 1 ) {
-			unshift @$array_ref, 'S';
-		}
-		else {
-			unshift @$array_ref, 'E';
-		}
-	}
-	return ( $array_ref, $tag_func );
+    unless ( grep { $array_ref->[0] eq $_ } keys %token ) {
+        # created with get_tag() method, so we need
+        # to munge the array to match the get_token() array
+        # After this is called, and before the method returns, you must
+        # use something like the following:
+        # shift @$self if $method == GET_TAG;
+        $tag_func = GET_TAG;
+        if ( '/' ne substr $array_ref->[0], 0, 1 ) {
+            unshift @$array_ref, 'S';
+        }
+        else {
+            unshift @$array_ref, 'E';
+        }
+    }
+    return ( $array_ref, $tag_func );
 }
 
 1;
+
 __END__
 
 =head1 NAME
@@ -445,7 +447,7 @@ string.
 
 =back
 
-=head1 Attribute munging methods
+=head1 Tag munging methods
 
 The C<delete_attr()> and C<set_attr()> methods allow the programmer to rewrite
 tag attributes on the fly.  It should be noted that bad HTML will be
@@ -492,6 +494,29 @@ arguments
 
 After this method is called, if successful, the C<as_is()>, C<return_attr()>
 and C<return_attrseq()> methods will all return updated results.
+
+=item * C<rewrite_tag()>
+
+This method rewrites the tag.  The tag name and the name of all attributes will
+be lower-cased.  Values that are not quoted with double quotes will be.  This
+may be called on both start or end tags.  Note that both C<set_attr()> and
+C<delete_attr()> call this method prior to returning.
+
+If called on a token that is not a tag, it simply returns.  Regardless of how
+it is called, it returns the token.
+
+ # <body alink=#0000ff BGCOLOR=#ffffff class='none'>
+ $token->rewrite_tag;
+ print $token->as_is;
+ # <body alink="#0000ff" bgcolor="#ffffff" class="none">
+
+A quick cleanup of sloppy HTML is now the following:
+
+ my $parser = HTML::TokeParser::Simple->new( $ugly_html );
+ while (my $token = $parser->get_token) {
+     $token->rewrite_tag;
+     print $token->as_is;
+ }
 
 =head1 Important note:
 

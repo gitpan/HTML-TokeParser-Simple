@@ -4,6 +4,7 @@ MANIFEST
 Makefile.PL
 README
 reload
-t/get_tag.t
-t/get_token.t
+t/01get_tag.t
+t/01get_token.t
+t/02munge_html.t
 

@@ -1,5 +1,13 @@
 Revision history for Perl extension HTML::TokeParser::Easy.
 
+2.1   Mon Jun 9, 2003
+      Made 'rewrite_tag' a public method.  
+      Fixed some formatting.  
+      Fixed bug where get_attrseq returned a hashref instead of an arrayref
+      upon failure.
+      Updated POD.
+      Broke all HTML munging tests out into their own test and added some tests
+
 2.0   Sun Jun 1, 2003
       is_tag, is_start_tag, and is_end_tag now can take regexes.
       Added set_attr and delete_attr methods to rewrite tags on the fly
