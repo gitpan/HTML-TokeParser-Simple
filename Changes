@@ -1,5 +1,12 @@
 Revision history for Perl extension HTML::TokeParser::Easy.
 
+3.1   Sun Sep 19, 2004
+      Added subclasses for each token type.
+
+      Massive POD update.
+
+      Test class for internals.
+
 3.0   Sat Sep 18, 2004
       'get_foo' methods replace the older 'return_foo' methods.  'return_foo'
       methods now call the new 'get_foo' methods and are deprecated (though

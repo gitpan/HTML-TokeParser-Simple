@@ -6,19 +6,20 @@ my $CLASS;
 
 BEGIN {
     chdir 't' if -d 't';
-    unshift @INC => '../blib/lib';
+    unshift @INC => '../lib/','../blib/lib';
     $CLASS = 'HTML::TokeParser::Simple';
     use_ok($CLASS) || die;
 }
 
 my $TOKEN_CLASS = "${CLASS}::Token";
+my $TAG_CLASS   = "${TOKEN_CLASS}::Tag";
 can_ok($CLASS, 'new');
 my $p = $CLASS->new(\*DATA);
 isa_ok( $p, $CLASS =>             '... and the object it returns' );
 
 can_ok($p, 'get_tag');
 my $token = $p->get_tag;
-isa_ok( $token, $TOKEN_CLASS =>   '... and the object it returns' );
+isa_ok( $token, $TAG_CLASS =>   '... and the object it returns' );
 my $old_token = $token;
 
 can_ok($token, 'is_declaration');
