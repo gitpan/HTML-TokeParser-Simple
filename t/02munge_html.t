@@ -31,14 +31,14 @@ $token->set_attr(bgcolor => 'white');
 is($token->as_is, '<body alink="#0000ff" bgcolor="white" foo="bar">',
                                   '... or overwrite an existing one');
 
-is_deeply($token->return_attrseq, [qw{alink bgcolor foo}],
+is_deeply($token->get_attrseq, [qw{alink bgcolor foo}],
                                   '... and the attribute sequence should be updated');
 my $attr = {
   alink   => "#0000ff",
   bgcolor => "white",
   foo     => "bar"
 };
-is_deeply($token->return_attr, $attr,
+is_deeply($token->get_attr, $attr,
                                   '... as should the attributes themselves');
 
 can_ok($token, 'delete_attr');

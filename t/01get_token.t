@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
-use Test::More tests => 40;
+use Test::More tests => 50;
 #use Test::More 'no_plan';
 
 my $CLASS;
@@ -31,8 +31,11 @@ ok( $token->is_start_tag('html'), '... and it should identify the token as a par
 ok( $token->is_start_tag,         '... or as a start tag in general');
 ok(!$token->is_start_tag('fake'), '... but it should not return false positives');
 
+can_ok($token, 'get_tag');
+is( $token->get_tag, 'html',      '... and it should return the correct tag' );
+
 can_ok($token, 'return_tag');
-is( $token->return_tag, 'html',   '... and it should return the correct tag' );
+is( $token->return_tag, 'html',   '... and calling this deprecated method should return the correct tag' );
 
 # important to remember that whitespace counts as a token.
 $token = $p->get_token for  1 .. 4; 
@@ -47,7 +50,7 @@ can_ok($token, 'return_text');
   is($token->return_text,
     '<!-- This is a comment -->', '... and it should return the correct text' );
   ok( $warning,                   '... while issuing a warning');                  
-  like($warning, qr/return_text\(\) is deprecated.  Use as_is\(\) instead/,
+  like($warning, qr/\Qreturn_text() is deprecated.  Use as_is() instead\E/,
                                   '... with an appropriate error message');
 }
 
@@ -70,25 +73,39 @@ ok( $token->is_end_tag,           '... and should identify the token as just bei
 
 $token = $p->get_token for ( 1..2 );
 
+can_ok($token, 'is_pi');
+ok( $token->is_pi, '... and it should correctly identify them' );
+my $non_start_tag = $token; # squirrel this away for the set_attr test
+
 can_ok($token, 'is_process_instruction');
 ok( $token->is_process_instruction, '... and it should correctly identify them' );
-my $non_start_tag = $token; # squirrel this away for the set_attr test
+
+can_ok($token, 'get_token0');
+# diag($token->get_token0);
+# more research needed.  This doesn't seem to return everything correctly
+ok( $token->get_token0,             '... and it should return something');
 
 can_ok($token, 'return_token0');
 # diag($token->return_token0);
 # more research needed.  This doesn't seem to return everything correctly
-ok( $token->return_token0,          '... and it should return something');
+ok( $token->return_token0,          '... and calling this deprecated method should return something');
 
 do { $token = $p->get_token } until $token->is_start_tag( 'body' );
-can_ok($token, 'return_attr');
-my $attr = $token->return_attr;
+can_ok($token, 'get_attr');
+my $attr = $token->get_attr;
 is( ref $attr , 'HASH',           '... and it should return a hashref' );
 is( $attr->{'bgcolor'}, '#ffffff','... correctly identifying the bgcolor' );
 is( $attr->{'alink'}, '#0000ff',  '... and the alink color' );
 
-can_ok($token, 'return_attrseq');
-my $arrayref = $token->return_attrseq;
+can_ok($token, 'get_attrseq');
+my $arrayref = $token->get_attrseq;
 is( ref $arrayref, 'ARRAY',       '... and it should return an array reference' );
+is( scalar @{$arrayref}, 2,       '... with the correct number of elements' );
+is( "@$arrayref", 'alink bgcolor','... in the correct order' );
+
+can_ok($token, 'return_attrseq');
+$arrayref = $token->return_attrseq;
+is( ref $arrayref, 'ARRAY',       '... and calling this deprecated method should return an array reference' );
 is( scalar @{$arrayref}, 2,       '... with the correct number of elements' );
 is( "@$arrayref", 'alink bgcolor','... in the correct order' );
 

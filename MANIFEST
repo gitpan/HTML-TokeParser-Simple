@@ -1,10 +1,12 @@
 Changes
-Simple.pm
-MANIFEST
+lib/HTML/TokeParser/Simple.pm
+lib/HTML/TokeParser/Simple/Token.pm
 Makefile.PL
+MANIFEST
 README
-reload
 t/01get_tag.t
 t/01get_token.t
 t/02munge_html.t
-
+t/03constructor.t
+t/data/test.html
+META.yml                                 Module meta-data (added by MakeMaker)

@@ -1,5 +1,21 @@
 Revision history for Perl extension HTML::TokeParser::Easy.
 
+3.0   Sat Sep 18, 2004
+      'get_foo' methods replace the older 'return_foo' methods.  'return_foo'
+      methods now call the new 'get_foo' methods and are deprecated (though
+      they do not yet issue warnings.)
+
+      The constructor has been overloaded to allow users to explicitly state
+      the source type of the HTML, if necessary.  Also, if LWP::Simple is
+      installed, the HTML may now be fetched from a URL.
+
+      $token->set_attr($token->return_attr) now works.
+
+      Added is_pi().  A shorthand for is_process_instruction().
+
+      Broke out HTML::TokeParser::Simple::Token into its own file.  I may
+      eventually refactor this into separate classes.
+
 2.2   Sat Jan 31, 2004
       'return_attr' now takes and optional argument.  If supplied, will return
       just that attribute value.
@@ -7,10 +23,14 @@ Revision history for Perl extension HTML::TokeParser::Easy.
 
 2.1   Mon Jun 9, 2003
       Made 'rewrite_tag' a public method.  
+
       Fixed some formatting.  
+
       Fixed bug where get_attrseq returned a hashref instead of an arrayref
       upon failure.
+      
       Updated POD.
+      
       Broke all HTML munging tests out into their own test and added some tests
 
 2.0   Sun Jun 1, 2003
