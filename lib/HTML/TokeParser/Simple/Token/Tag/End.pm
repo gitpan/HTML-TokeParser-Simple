@@ -99,7 +99,7 @@ __END__
 
 =head1 NAME
 
-HTML::TokeParser::Simple::Token::Tag::END - Token.pm "end tag" class.
+HTML::TokeParser::Simple::Token::Tag::End - Token.pm "end tag" class.
 
 =head1 SYNOPSIS
 

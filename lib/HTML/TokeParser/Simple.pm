@@ -15,7 +15,7 @@ use HTML::TokeParser::Simple::Token::ProcessInstruction;
 use vars qw/ @ISA $VERSION $REVISION /;
 
 $REVISION = '$Id: Simple.pm,v 1.7 2004/09/19 23:36:49 ovid Exp $';
-$VERSION  = '3.11';
+$VERSION  = '3.12';
 @ISA = qw/ HTML::TokeParser /;
 
 # constructors

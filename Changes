@@ -1,5 +1,8 @@
 Revision history for Perl extension HTML::TokeParser::Easy.
 
+3.11  Mon Sep 20, 2004
+      Corrected minor, but embarrassing, POD issue.
+
 3.11  Sun Sep 19, 2004
       Broke start and end tags out into their own classes.  D'oh!
 
