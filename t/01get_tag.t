@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
-use Test::More tests => 40; 
+use Test::More tests => 43; 
 my $CLASS;
 
 BEGIN {
@@ -74,6 +74,12 @@ my $attr = $token->return_attr;
 is( ref $attr , 'HASH',           '... and it should return a hashref' );
 is( $attr->{'bgcolor'}, '#ffffff','... correctly identifying the bgcolor' );
 is( $attr->{'alink'}, '#0000ff',  '... and the alink color' );
+is($token->return_attr('bgcolor'), '#ffffff', 
+                                  '... and fetching a specific attribute should succeed');
+is($token->return_attr('BGCOLOR'), '#ffffff', 
+                                  '... and fetching a specific attribute should succeed');
+is($token->return_attr('alink'), '#0000ff', 
+                                  '... and fetching a specific attribute should succeed');
 
 can_ok($token, 'return_attrseq');
 my $arrayref = $token->return_attrseq;

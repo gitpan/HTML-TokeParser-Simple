@@ -4,7 +4,7 @@ use strict;
 use Carp;
 use HTML::TokeParser;
 use vars qw/ @ISA $VERSION $AUTOLOAD /;
-$VERSION = '2.1';
+$VERSION = '2.2';
 @ISA = qw/ HTML::TokeParser /;
 
 use constant TOKEN_CLASS => 'HTML::TokeParser::Simple::Token';
@@ -160,7 +160,8 @@ sub return_token0 {
 
 sub return_attr {
     my $self = shift;
-    $self->_attr_handler( 'attr', {} );
+    my $attributes = $self->_attr_handler( 'attr', {} );
+    return @_ ? $attributes->{lc shift} : $attributes;
 }
 
 sub return_attrseq {
@@ -415,10 +416,13 @@ C<return_> part.
 
 Do you have a start tag or end tag?  This will return the type (lower case).
 
-=item * C<return_attr()>
+=item * C<return_attr([$attribute])>
 
 If you have a start tag, this will return a hash ref with the attribute names
 as keys and the values as the values.
+
+If you pass in an attribute name, it will return the value for just that
+attribute.  Returns C<undef> if the attribute is not found.
 
 =item * C<return_attrseq()>
 

@@ -1,5 +1,10 @@
 Revision history for Perl extension HTML::TokeParser::Easy.
 
+2.2   Sat Jan 31, 2004
+      'return_attr' now takes and optional argument.  If supplied, will return
+      just that attribute value.
+      Updated POD.
+
 2.1   Mon Jun 9, 2003
       Made 'rewrite_tag' a public method.  
       Fixed some formatting.  
