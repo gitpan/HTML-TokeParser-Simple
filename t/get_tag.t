@@ -5,8 +5,8 @@ use Test;
 
 BEGIN {
     chdir 't' if -d 't';
-    unshift @INC, '../blib/lib';
-    plan tests => 24;
+    unshift @INC => '../blib/lib';
+    plan tests => 25;
 }
 
 use HTML::TokeParser::Simple;
@@ -15,7 +15,7 @@ my $p = HTML::TokeParser::Simple->new(\*DATA);
 ok( ref $p, 'HTML::TokeParser::Simple' );
 
 my $token = $p->get_tag;
-ok( ref $token, 'HTML::TokeParser::Simple' );
+ok( ref $token, 'HTML::TokeParser::Simple::Token' );
 my $old_token = copy_array( $token );
 ok( $token->is_declaration, '' );
 ok( arrays_equal( $old_token, $token ), 1 );
@@ -29,6 +29,7 @@ ok( $token->is_start_tag( 'fake tag' ), '' );
 $token = $p->get_tag for ( 1 .. 2 );
 ok( $token->is_comment, '' );
 ok( $token->return_text, '<title>' );
+ok( $token->as_is, '<title>' );
 
 $token = $p->get_tag; 
 
@@ -59,15 +60,16 @@ sub copy_array {
 	# use this to copy array without copying the reference
 	my $aref = shift;
 	my @new_array;
-	push @new_array, $_ foreach @$aref;
+	push @new_array => $_ foreach @$aref;
 	return \@new_array;
 }
 
 sub arrays_equal {
 	my ( $aref1, $aref2 ) = @_;
-	return 0 if @$aref1 != @$aref2; 
+	return @$aref1 == @$aref2; 
+	local $_;
 	foreach ( 0 .. $#$aref1 ) {
-		return 0 if $aref1->[$_] ne $aref2->[$_];
+		return $aref1->[$_] eq $aref2->[$_];
 	}
 	return 1;
 }

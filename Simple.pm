@@ -1,12 +1,33 @@
-##################
 package HTML::TokeParser::Simple;
-##################
+
 use strict;
 use Carp;
 use HTML::TokeParser;
 use vars qw/ @ISA $VERSION $AUTOLOAD /;
-$VERSION = '1.3';
+$VERSION = '1.4';
 @ISA = qw/ HTML::TokeParser /;
+
+use constant TOKEN_CLASS => 'HTML::TokeParser::Simple::Token';
+
+# constructors
+
+sub get_token {
+	my $self = shift;
+	my ( @args ) = @_;
+	my $token = $self->SUPER::get_token( @args );
+	return unless defined $token;
+	bless $token, TOKEN_CLASS;
+}
+
+sub get_tag {
+	my $self = shift;
+	my ( @args ) = @_;
+	my $token = $self->SUPER::get_tag( @args );
+	return unless defined $token;
+	bless $token, TOKEN_CLASS;
+}
+
+package HTML::TokeParser::Simple::Token;
 
 use constant GET_TAG     => 1;
 use constant GET_TOKEN   => 0;
@@ -49,32 +70,18 @@ my %token = (
 	}
 );
 
-# constructors
-
-sub get_token {
-	my $self = shift;
-	my ( @args ) = @_;
-	my $token = $self->SUPER::get_token( @args );
-	return if ! defined $token;
-	bless $token, ref $self;
-}
-
-sub get_tag {
-	my $self = shift;
-	my ( @args ) = @_;
-	my $token = $self->SUPER::get_tag( @args );
-	return if ! defined $token;
-	bless $token, ref $self;
-}
-
 # return_foo methods
 
-sub return_text {
+sub as_is {
 	my ( $self, $method ) = _synch_arrays( shift );
 	my $type = $self->[0];
 	my $text = $self->[ $token{ $type }{ text } ];
 	shift @$self if $method == GET_TAG;
 	return $text;
+}
+
+sub return_text {
+	goto &as_is;
 }
 
 sub return_tag {
@@ -217,8 +224,8 @@ HTML::TokeParser::Simple - easy to use HTML::TokeParser interface
 
  while ( my $token = $p->get_token ) {
      # This prints all text in an HTML doc (i.e., it strips the HTML)
-     next if ! $token->is_text;
-     print $token->return_text;
+     next unless $token->is_text;
+     print $token->as_is;
  }
 
 
@@ -288,8 +295,9 @@ supplied tag is case-insensitive.
 =item * C<is_text>
 
 Use this to determine if you have text.  Note that this is I<not> to be
-confused with the C<return_text> method described below!  C<is_text> will
-identify text that the user typically sees display in the Web browser.
+confused with the C<return_text> (I<deprecated>) method described below!
+C<is_text> will identify text that the user typically sees display in the Web
+browser.
 
 =item * C<is_comment>
 
@@ -345,6 +353,17 @@ attributes, if any.
 
 =item * C<return_text>
 
+This method has been deprecated in favor of C<as_is>.  Programmers were getting
+confused over the difference between C<is_text>, C<return_text>, and some
+parser methods such as C<HTML::TokeParser::get_text> and friends.  This
+confusion stems from the fact that your author is a blithering idiot when it
+comes to choosing methods names :)
+
+This method will hang around for a while, but no guarantees (but hey, that's
+what deprecation is, yes?).
+
+=item * C<as_is>
+
 This is the exact text of whatever the token is representing.
 
 =item * C<return_token0>
@@ -354,6 +373,16 @@ the opening tag.  Example:  For <?php, "php" will be the start of the returned
 string.
 
 =back
+
+=head1 Important note:
+
+Some people get confused and try to call parser methods on tokens and token
+methods (those described above) on methods.  To prevent this,
+C<HTML::TokeParser::Simple> versions 1.4 and above now bless all tokens into a
+new class which inherits nothing.  Please keep this in mind while using this
+module (and many thanks to PodMaster
+L<http://www.perlmonks.org/index.pl?node_id=107642> for pointing out this issue
+to me.
 
 =head1 Examples
 
@@ -375,7 +404,7 @@ HTML comments.  You need to get all HTML comments from the HTML.
      my $p = HTML::TokeParser::Simple->new( $doc );
      while ( my $token = $p->get_token ) {
          next if ! $token->is_comment;
-         print PHB $token->return_text, "\n";
+         print PHB $token->as_is, "\n";
      }
  }
 
@@ -402,7 +431,7 @@ just fired, it falls on you need to strip those comments from the HTML.
      my $p = HTML::TokeParser::Simple->new( $doc );
      while ( my $token = $p->get_token ) {
          next if $token->is_comment;
-         print PHB $token->return_text;
+         print PHB $token->as_is;
      }
      close PHB;
  }
@@ -435,7 +464,7 @@ the form tags.  You need to change it to "http://www.bar.com/".
              print FILE $form_tag;
          }
          else {
-             print FILE $token->return_text;
+             print FILE $token->as_is;
          }
      }
      close FILE;
@@ -459,6 +488,14 @@ the form tags.  You need to change it to "http://www.bar.com/".
 Copyright (c) 2001 Curtis "Ovid" Poe.  All rights reserved.  This program is
 free software; you may redistribute it and/or modify it under the same terms as
 Perl itself
+
+=head1 TODO
+
+Considering overloading some methods to allow multiple parameters to be tested.
+May add support for regexen.  For example:
+
+  if ( $token->is_start_tag( qw/ h1 h2 h3 h4 h5 h6 / ) {...}
+  if ( $token->is_start_tag( qr/h[1..6]/ ) {...}
 
 =head1 AUTHOR
 

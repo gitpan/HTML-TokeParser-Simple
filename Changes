@@ -1,5 +1,12 @@
 Revision history for Perl extension HTML::TokeParser::Easy.
 
+1.4   Wed Nov 13, 2002
+      Tokens are now blessed into a separate class to prevent people from
+      trying to call parser methods on them.  return_text() has been deprecated 
+      in favor of as_is().  Tests and POD updated.
+
+      Updated Makefile.PL to list HTML::TokeParser as a requirement (whoops!)
+
 1.3   Fri July 5 13:11:00 2002
       Added is_tag() method and made the leading slash on an end tag optional.
       Updated the POD and and tests.
