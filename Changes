@@ -1,0 +1,11 @@
+Revision history for Perl extension HTML::TokeParser::Easy.
+
+1.1   Fri Mar  1 15:52:00 2002
+      Finally got off my duff and added support for the get_tag()
+      method.  Also overloaded the is_/(start|end)/_tag methods
+      to allow testing for the tag and tag type at the same time.
+
+0.01  Mon Feb  4 09:31:52 2002
+	- original version; created by h2xs 1.21 with options
+		-AX -n HTML::TokeParser::Easy
+
