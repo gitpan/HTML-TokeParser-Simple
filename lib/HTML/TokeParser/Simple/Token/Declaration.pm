@@ -3,7 +3,7 @@ package HTML::TokeParser::Simple::Token::Declaration;
 use strict;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: Declaration.pm,v 1.1 2004/09/19 21:12:24 ovid Exp $';
+$REVISION = '$Id: Declaration.pm,v 1.2 2004/09/25 23:36:53 ovid Exp $';
 $VERSION  = '1.0';
 use base 'HTML::TokeParser::Simple::Token';
 
@@ -15,7 +15,7 @@ __END__
 
 =head1 NAME
 
-HTML::TokeParser::Simple::Token::Declaration - Token.pm Declaration class.
+HTML::TokeParser::Simple::Token::Declaration - Token.pm declaration class.
 
 =head1 SYNOPSIS
 

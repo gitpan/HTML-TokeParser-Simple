@@ -3,7 +3,7 @@ package HTML::TokeParser::Simple::Token::Text;
 use strict;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: Text.pm,v 1.1 2004/09/19 19:19:23 ovid Exp $';
+$REVISION = '$Id: Text.pm,v 1.2 2004/09/25 23:36:53 ovid Exp $';
 $VERSION  = '1.0';
 use base 'HTML::TokeParser::Simple::Token';
 
@@ -19,7 +19,7 @@ __END__
 
 =head1 NAME
 
-HTML::TokeParser::Simple::Token::Text - Text class for C<HTML::TokeParser::Simple::Text>
+HTML::TokeParser::Simple::Token::Text - Token.pm text class.
 
 =head1 SYNOPSIS
 

@@ -3,7 +3,7 @@ package HTML::TokeParser::Simple::Token::Comment;
 use strict;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: Comment.pm,v 1.2 2004/09/19 21:13:48 ovid Exp $';
+$REVISION = '$Id: Comment.pm,v 1.3 2004/09/25 23:36:53 ovid Exp $';
 $VERSION  = '1.0';
 use base 'HTML::TokeParser::Simple::Token';
 
@@ -15,7 +15,7 @@ __END__
 
 =head1 NAME
 
-HTML::TokeParser::Simple::Token::Comment - Token.pm comment subclass.
+HTML::TokeParser::Simple::Token::Comment - Token.pm comment class.
 
 =head1 SYNOPSIS
 

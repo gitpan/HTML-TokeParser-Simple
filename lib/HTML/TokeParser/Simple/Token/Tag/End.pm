@@ -4,7 +4,7 @@ use strict;
 use Carp;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: End.pm,v 1.1 2004/09/19 23:37:32 ovid Exp $';
+$REVISION = '$Id: End.pm,v 1.2 2004/09/25 23:36:53 ovid Exp $';
 $VERSION  = '1.0';
 use base 'HTML::TokeParser::Simple::Token::Tag';
 

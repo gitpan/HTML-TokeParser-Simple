@@ -7,7 +7,7 @@ use Test::More tests => 21;
 my $CLASS;
 BEGIN {
     chdir 't' if -d 't';
-    unshift @INC => '../blib/lib';
+    unshift @INC => '../lib';
     $CLASS = 'HTML::TokeParser::Simple';
     use_ok($CLASS) || die;
 }

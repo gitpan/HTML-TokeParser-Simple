@@ -1,6 +1,11 @@
-Revision history for Perl extension HTML::TokeParser::Easy.
+Revision history for Perl extension HTML::TokeParser::Simple.
 
-3.11  Mon Sep 20, 2004
+3.13  Sat Set 25, 2004
+      Corrected @INC paths in the tests.
+      Fixed still more embarrassing POD issues.
+      Sigh.
+
+3.12  Mon Sep 20, 2004
       Corrected minor, but embarrassing, POD issue.
 
 3.11  Sun Sep 19, 2004

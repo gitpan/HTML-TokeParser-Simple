@@ -6,7 +6,7 @@ my $CLASS;
 
 BEGIN {
     chdir 't' if -d 't';
-    unshift @INC => '../lib/','../blib/lib';
+    unshift @INC => '../lib/';
     $CLASS = 'HTML::TokeParser::Simple';
     use_ok($CLASS) || die;
 }
