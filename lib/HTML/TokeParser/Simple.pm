@@ -5,6 +5,8 @@ use Carp;
 use HTML::TokeParser;
 use HTML::TokeParser::Simple::Token;
 use HTML::TokeParser::Simple::Token::Tag;
+use HTML::TokeParser::Simple::Token::Tag::Start;
+use HTML::TokeParser::Simple::Token::Tag::End;
 use HTML::TokeParser::Simple::Token::Text;
 use HTML::TokeParser::Simple::Token::Comment;
 use HTML::TokeParser::Simple::Token::Declaration;
@@ -12,15 +14,15 @@ use HTML::TokeParser::Simple::Token::ProcessInstruction;
 
 use vars qw/ @ISA $VERSION $REVISION /;
 
-$REVISION = '$Id: Simple.pm,v 1.6 2004/09/19 21:08:17 ovid Exp $';
-$VERSION  = '3.1';
+$REVISION = '$Id: Simple.pm,v 1.7 2004/09/19 23:36:49 ovid Exp $';
+$VERSION  = '3.11';
 @ISA = qw/ HTML::TokeParser /;
 
 # constructors
 
 my %FACTORY_CLASSES = (
-    S   => 'HTML::TokeParser::Simple::Token::Tag',
-    E   => 'HTML::TokeParser::Simple::Token::Tag',
+    S   => 'HTML::TokeParser::Simple::Token::Tag::Start',
+    E   => 'HTML::TokeParser::Simple::Token::Tag::End',
     T   => 'HTML::TokeParser::Simple::Token::Text',
     C   => 'HTML::TokeParser::Simple::Token::Comment',
     D   => 'HTML::TokeParser::Simple::Token::Declaration',
@@ -73,7 +75,9 @@ sub get_tag {
     my @args = @_;
     my $token = $self->SUPER::get_tag( @args );
     return unless defined $token;
-    return HTML::TokeParser::Simple::Token::Tag->new($token);
+    return $token->[0] =~ /^\//
+        ?  HTML::TokeParser::Simple::Token::Tag::End->new($token)
+        :  HTML::TokeParser::Simple::Token::Tag::Start->new($token);
 }
 
 1;

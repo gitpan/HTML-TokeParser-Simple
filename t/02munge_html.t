@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
-use Test::More tests => 23;
+use Test::More tests => 21;
 #use Test::More 'no_plan';
 
 my $CLASS;
@@ -17,10 +17,6 @@ my $p = $CLASS->new(\*DATA);
 my $token;
 do { $token = $p->get_token } until $token->is_end_tag('head');
 can_ok($token, 'set_attr');
-eval{$token->set_attr( foo => 'bar' )};
-ok($@,                            '... and calling it on a "non start tag" should die');
-like($@, qr/set_attr\(\) may only be called on start tags/,
-                                  '... with an appropriate error message');
 
 do { $token = $p->get_token } until $token->is_start_tag('body');
 can_ok($token, 'set_attr');
