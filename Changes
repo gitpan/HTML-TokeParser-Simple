@@ -1,5 +1,10 @@
 Revision history for Perl extension HTML::TokeParser::Easy.
 
+1.2   Fri Jun 21 08:05:00 2002
+      Turns out the the POD had more errors than I though.  There
+	  are no changes in the code or the tests, but the POD has been
+	  updated.
+
 1.1   Fri Mar  1 15:52:00 2002
       Finally got off my duff and added support for the get_tag()
       method.  Also overloaded the is_/(start|end)/_tag methods

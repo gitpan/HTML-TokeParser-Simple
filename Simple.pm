@@ -5,7 +5,7 @@ use strict;
 use Carp;
 use HTML::TokeParser;
 use vars qw/ @ISA $VERSION $AUTOLOAD /;
-$VERSION = '1.1';
+$VERSION = '1.2';
 @ISA = qw/ HTML::TokeParser /;
 
 use constant GET_TAG     => 1;
@@ -209,11 +209,10 @@ HTML::TokeParser::Simple - easy to use HTML::TokeParser interface
  use HTML::TokeParser::Simple;
  my $p = HTML::TokeParser::Simple->new( $somefile );
 
- while ( my $token = $parser->get_token )
- {
+ while ( my $token = $parser->get_token ) {
      # This prints all text in an HTML doc (i.e., it strips the HTML)
-     next if ! $parser->is_text( $token );
-     print $parser->return_text( $token );
+     next if ! $token->is_text;
+     print $token->return_text;
  }
 
 
@@ -243,9 +242,6 @@ The following will be brief descriptions of the available methods followed by
 examples.
 
 =head1 C<is_> Methods
-
-=head2 Note:
-
 
 =over 4
 
@@ -366,12 +362,10 @@ HTML comments.  You need to get all HTML comments from the HTML.
 
  open PHB, "> phbreport.txt" or die "Cannot open phbreport for writing: $!";
 
- foreach my $doc ( @html_docs )
- {
+ foreach my $doc ( @html_docs ) {
      print "Processing $doc\n";
      my $p = HTML::TokeParser::Simple->new( $doc );
-     while ( my $token = $p->get_token )
-     {
+     while ( my $token = $p->get_token ) {
          next if ! $token->is_comment;
          print PHB $token->return_text, "\n";
      }
@@ -391,16 +385,14 @@ just fired, it falls on you need to strip those comments from the HTML.
  my $new_folder = 'no_comment/';
  my @html_docs  = glob( "*.html" );
 
- foreach my $doc ( @html_docs )
- {
+ foreach my $doc ( @html_docs ) {
      print "Processing $doc\n";
      my $new_file = "$new_folder$doc";
 
      open PHB, "> $new_file" or die "Cannot open $new_file for writing: $!";
 
      my $p = HTML::TokeParser::Simple->new( $doc );
-     while ( my $token = $p->get_token )
-     {
+     while ( my $token = $p->get_token ) {
          next if $token->is_comment;
          print PHB $token->return_text;
      }
@@ -419,23 +411,22 @@ the form tags.  You need to change it to "http://www.bar.com/".
  my $new_folder = 'new_html/';
  my @html_docs  = glob( "*.html" );
 
- foreach my $doc ( @html_docs )
- {
+ foreach my $doc ( @html_docs ) {
      print "Processing $doc\n";
      my $new_file = "$new_folder$doc";
 
      open FILE, "> $new_file" or die "Cannot open $new_file for writing: $!";
 
      my $p = HTML::TokeParser::Simple->new( $doc );
-     while ( my $token = $p->get_token )
-     {
-         if ( $token->is_start_tag( 'form' ) )
-         {
-             my $form_tag = new_form_tag( $token->return_attr, $token->return_attrseq );
+     while ( my $token = $p->get_token ) {
+         if ( $token->is_start_tag( 'form' ) ) {
+             my $form_tag = new_form_tag( 
+                $token->return_attr, 
+                $token->return_attrseq 
+             );
              print FILE $form_tag;
          }
-         else
-         {
+         else {
              print FILE $token->return_text;
          }
      }
@@ -444,65 +435,15 @@ the form tags.  You need to change it to "http://www.bar.com/".
 
  sub new_form_tag {
      my ( $attr, $attrseq ) = @_;
-     if ( exists $attr->{ action } )
-     {
+     if ( exists $attr->{ action } ) {
          $attr->{ action } =~ s/www\.foo\.com/www.bar.com/;
      }
      my $tag = '';
-     foreach ( @$attrseq )
-     {
+     foreach ( @$attrseq ) {
          $tag .= "$_=\"$attr->{ $_ }\" ";
      }
      $tag = "<form $tag>";
      return $tag;
- }
-
-=head2 C<HTML::TokeParser::Simple::get_tag()>
-
-The C<HTML::TokeParser::Simple::get_tag()> is identical to the C<get_tag()>
-method in C<HTML::TokeParser>.  It returns the next start or end tag in the
-document, or C<undef> if no more tags are to be had.  Thus, you may call any
-methods on the returned token that you would call on start and end tag tokens
-returned by the C<get_token()> method.  For example, here is the main C<while>
-loop from a code generator that I use that parses HTML documents and writes a
-shell of the form parsing code:
-
- while (my $token = $p->get_tag) {
-     my $tag = $token->return_tag;
-
-     if ( my $form_pos = ( $tag eq 'form' .. $tag eq '/form' ) ) {
-         # Oh!  We're in a form.  Start looking for stuff.
-         if ( not_first( $form_pos ) and not_last( $form_pos ) ) {
-
-             add_input_element( $token )  if $tag eq 'input';
-
-             # <select> is a pain, so we need to handle it differently
-             if ( my $select_pos = ( $tag eq 'select' .. $tag eq '/select' ) ) {
-
-             # cache select token so we can get its attributes later
-             $select_token = $token if $tag eq 'select';
-
-             if ( not_first( $select_pos ) and not_last( $select_pos ) ) {
-                     add_select_element( $token, $p, $select_token ) if $tag eq 'option';
-                 } elsif ( is_last( $select_pos ) ) {
-                     # we've finished the <select>, so add it to
-                     # %select so we knows we've seen it.
-                     $select{ $select_token->return_attr()->{ 'name' } } = '';
-                 }
-             } # end if (select)
-
-             foreach ( qw/ textarea button / ) {
-                 add_generic_element( $tag, $token ) if $tag eq $_;
-             }
-         } elsif ( is_last( $form_pos ) ) {
-             # we've finished the form, so let's write the document, clear the vars,
-             # and start looking for more forms.
-             &write_template;
-             %element       = ();
-             @element_order = ();
-             $formnum++;
-         }
-     } # end if (form)
  }
 
 =head1 COPYRIGHT
