@@ -1,78 +1,86 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
-use Test;
+use Test::More tests => 40; 
+my $CLASS;
 
 BEGIN {
     chdir 't' if -d 't';
     unshift @INC => '../blib/lib';
-    plan tests => 25;
+    $CLASS = 'HTML::TokeParser::Simple';
+    use_ok($CLASS) || die;
 }
 
-use HTML::TokeParser::Simple;
+my $TOKEN_CLASS = "${CLASS}::Token";
+can_ok($CLASS, 'new');
+my $p = $CLASS->new(\*DATA);
+isa_ok( $p, $CLASS =>             '... and the object it returns' );
 
-my $p = HTML::TokeParser::Simple->new(\*DATA);
-ok( ref $p, 'HTML::TokeParser::Simple' );
-
+can_ok($p, 'get_tag');
 my $token = $p->get_tag;
-ok( ref $token, 'HTML::TokeParser::Simple::Token' );
-my $old_token = copy_array( $token );
-ok( $token->is_declaration, '' );
-ok( arrays_equal( $old_token, $token ), 1 );
-ok( $token->is_start_tag( 'html' ), 1 );
-ok( $token->is_tag( 'html' ), 1 );
-ok( $token->is_tag, 1 );
-ok( $token->return_tag, 'html' );
-ok( $token->is_start_tag( 'fake tag' ), '' );
+isa_ok( $token, $TOKEN_CLASS =>   '... and the object it returns' );
+my $old_token = $token;
+
+can_ok($token, 'is_declaration');
+ok(! $token->is_declaration,      '... and it should return false' );
+is_deeply($token,$old_token,      '... and the token should not be changed' );
+
+can_ok($token, 'is_start_tag');
+ok( $token->is_start_tag('html'), '... and it should correctly identify a given start tag' );
+ok(!$token->is_start_tag('fake'), "... bug it shouldn't give false positives" );
+ok( $token->is_start_tag,         '... and it should correctly identify a start tag' );
+
+can_ok($token, 'is_tag');
+ok($token->is_tag('html'),        '... and it should identify a token as a given tag'  );
+ok(!$token->is_tag('fake'),       "... and it shouldn't give false positives");
+ok($token->is_tag,                '... and it should identify that the token is a tag');
+
+can_ok($token, 'return_tag');
+ok(my $tag = $token->return_tag,  '... and calling it should succeed' );
+is($tag, 'html',                  '... by returning the correct tag');
 
 # important to remember that whitespace counts as a token.
 $token = $p->get_tag for ( 1 .. 2 );
-ok( $token->is_comment, '' );
-ok( $token->return_text, '<title>' );
-ok( $token->as_is, '<title>' );
+
+can_ok($token, 'is_comment');
+ok(!$token->is_comment,           "... but it shouldn't have false positives");
+
+can_ok($token, 'return_text');
+{
+  my $warning;
+  local $SIG{__WARN__} = sub { $warning = shift };
+  is($token->return_text,
+                       '<title>', '... and it should return the correct text' );
+  ok( $warning,                   '... while issuing a warning');                  
+  like($warning, qr/return_text\(\) is deprecated.  Use as_is\(\) instead/,
+                                  '... with an appropriate error message');
+}
+
+can_ok($token, 'as_is');
+is( $token->as_is, '<title>',     '... and it should return the correct text');
 
 $token = $p->get_tag; 
 
-# I need to dig into this.  The behavior is inconsistent with
-# get_token, which doesn't require the backslash.
-
-ok( $token->is_end_tag( '/title' ), 1 );
-ok( $token->is_end_tag( 'title' ), 1 );
-ok( $token->is_end_tag( 'TITLE' ), 1 );
-ok( $token->is_end_tag, 1 );
+can_ok($token, 'is_end_tag');
+ok( $token->is_end_tag('/title'), '... and it should identify a particular end tag' );
+ok( $token->is_end_tag('title'),  '... even without a slash' );
+ok( $token->is_end_tag('TITLE'),  '... regardless of case' );
+ok( $token->is_end_tag,           '... and should identify the token as just being an end tag' );
 
 $token = $p->get_tag for 1..2;
-$old_token = copy_array( $token );
-ok( ref $token->return_attr, 'HASH' );
-ok( $token->return_attr()->{'bgcolor'}, '#ffffff' );
-ok( $token->return_attr()->{'alink'}, '#0000ff' );
-ok( arrays_equal( $old_token, $token ), 1 );
 
-$old_token = copy_array( $token );
-ok( arrays_equal( $old_token, $token ), 1 );
+can_ok($token, 'return_attr');
+my $attr = $token->return_attr;
+is( ref $attr , 'HASH',           '... and it should return a hashref' );
+is( $attr->{'bgcolor'}, '#ffffff','... correctly identifying the bgcolor' );
+is( $attr->{'alink'}, '#0000ff',  '... and the alink color' );
+
+can_ok($token, 'return_attrseq');
 my $arrayref = $token->return_attrseq;
-ok( ref $arrayref, 'ARRAY' );
-ok( scalar @{$arrayref}, 2 );
-ok( $arrayref->[0], 'alink' );
-ok( $arrayref->[1], 'bgcolor' );
+is( ref $arrayref, 'ARRAY',       '... and it should return an array reference' );
+is( scalar @{$arrayref}, 2,       '... with the correct number of elements' );
+is( "@$arrayref", 'alink bgcolor', '... in the correct order' );
 
-sub copy_array {
-	# use this to copy array without copying the reference
-	my $aref = shift;
-	my @new_array;
-	push @new_array => $_ foreach @$aref;
-	return \@new_array;
-}
-
-sub arrays_equal {
-	my ( $aref1, $aref2 ) = @_;
-	return @$aref1 == @$aref2; 
-	local $_;
-	foreach ( 0 .. $#$aref1 ) {
-		return $aref1->[$_] eq $aref2->[$_];
-	}
-	return 1;
-}
 __DATA__
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html>

@@ -5,10 +5,9 @@ WriteMakefile(
     'NAME'         => 'HTML::TokeParser::Simple',
     'VERSION_FROM' => 'Simple.pm',
     'PREREQ_PM'    => { 
-		'HTML::Parser'     => 3.25,
-		'HTML::TokeParser' => 2.24 
-	},
-    ($] >= 5.005 
-		? (AUTHOR => 'Curtis "Ovid" Poe <poec@yahoo.com>') 
-		: ()),
+        'HTML::Parser'     => 3.25,
+        'HTML::TokeParser' => 2.24,
+        'Test::More'       => ''
+    },
+    ($] >= 5.005 ? (AUTHOR => 'Curtis "Ovid" Poe <poec@yahoo.com>') : ()),
 );

@@ -1,5 +1,13 @@
 Revision history for Perl extension HTML::TokeParser::Easy.
 
+2.0   Sun Jun 1, 2003
+      is_tag, is_start_tag, and is_end_tag now can take regexes.
+      Added set_attr and delete_attr methods to rewrite tags on the fly
+      Converted to Test::More and doubled the number of tests
+      Updated POD
+      Updated Makefile.PL to list Test::More as a requirement
+      Deprecated 'return_text' now carps
+
 1.4   Wed Nov 13, 2002
       Tokens are now blessed into a separate class to prevent people from
       trying to call parser methods on them.  return_text() has been deprecated 
@@ -23,5 +31,5 @@ Revision history for Perl extension HTML::TokeParser::Easy.
 
 0.01  Mon Feb  4 09:31:52 2002
       - original version; created by h2xs 1.21 with options
-      -AX -n HTML::TokeParser::Easy
+      -AX -n HTML::TokeParser::Simple
 

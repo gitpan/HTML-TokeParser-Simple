@@ -4,7 +4,7 @@ use strict;
 use Carp;
 use HTML::TokeParser;
 use vars qw/ @ISA $VERSION $AUTOLOAD /;
-$VERSION = '1.4';
+$VERSION = '2.0';
 @ISA = qw/ HTML::TokeParser /;
 
 use constant TOKEN_CLASS => 'HTML::TokeParser::Simple::Token';
@@ -70,6 +70,59 @@ my %token = (
 	}
 );
 
+# attribute munging methods
+
+sub set_attr {
+  my ($self, $name, $value) = @_;
+  $name = lc $name;
+  unless ($self->is_start_tag) {
+    require Carp;
+    Carp::croak('set_attr() may only be called on start tags');
+  }
+  my $attr    = $self->return_attr;
+  my $attrseq = $self->return_attrseq;
+  unless (exists $attr->{$name}) {
+    push @$attrseq => $name;
+  }
+  $attr->{$name} = $value;
+  $self->_rewrite_tag;
+}
+
+sub _rewrite_tag {
+  my $self    = shift;
+  my $attr    = $self->return_attr;
+  my $attrseq = $self->return_attrseq;
+
+	my $type = $self->[0];
+  # capture the final slash if the tag is self-closing
+	my ($self_closing) = $self->[ $token{ $type }{ text } ] =~ m{(\s?/)>$};
+  $self_closing ||= '';
+  
+  my $tag = '';
+  foreach ( @$attrseq ) {
+    next if $_ eq '/'; # is this a bug in HTML::TokeParser?
+    $tag .= sprintf qq{ %s="%s"}, $_, $attr->{$_};
+  }
+  $tag = sprintf '<%s%s%s>', $self->return_tag, $tag, $self_closing;
+	$self->[ $token{ $type }{ text } ] = $tag;
+  $self;
+}
+
+sub delete_attr {
+  my ($self,$name) = @_;
+  $name = lc $name;
+  unless ($self->is_start_tag) {
+    require Carp;
+    Carp::croak('set_attr() may only be called on start tags');
+  }
+  my $attr       = $self->return_attr;
+  return unless exists $attr->{$name};
+  delete $attr->{$name};
+  my $attrseq    = $self->return_attrseq;
+  @$attrseq = grep { $_ ne $name } @$attrseq;
+  $self->_rewrite_tag;
+}
+
 # return_foo methods
 
 sub as_is {
@@ -81,6 +134,8 @@ sub as_is {
 }
 
 sub return_text {
+  require Carp;
+  Carp::carp('return_text() is deprecated.  Use as_is() instead');
 	goto &as_is;
 }
 
@@ -139,27 +194,31 @@ sub is_tag {
 }
 
 sub is_start_tag {
-	my ( $self, $method ) = _synch_arrays( shift );
-	my $tag = shift || '';
-	return $self->_start_end_handler( START_TAG, $tag );
+	my ($self) = _synch_arrays( shift );
+	return $self->_start_end_handler( START_TAG, @_ );
 }
 
 sub is_end_tag {
-	my ( $self, $method ) = _synch_arrays( shift );
-	my $tag = shift || '';
-	return $self->_start_end_handler( END_TAG, $tag );
+	my ($self) = _synch_arrays( shift );
+	return $self->_start_end_handler( END_TAG, @_ );
 }
 
 # private methods
 
 sub _start_end_handler {
 	my ( $self, $requested_type, $tag ) = @_;
+  $tag ||= '';
 	my $result = $self->_is( $requested_type );
 	return $result if ! $tag or ! $result;
-	$tag = lc $tag;
-	# strip leading / if they supplied it
-	$tag =~ s{^/}{};
-	return $self->[$token{ $requested_type }{ tag }] =~ m{^/?$tag$};
+  if ( 'Regexp' eq ref $tag ) {
+	  return $self->[$token{ $requested_type }{ tag }] =~ $tag;
+  }
+  else {
+  	$tag = lc $tag;
+	  # strip leading / if they supplied it
+  	$tag =~ s{^/}{};
+	  return $self->[$token{ $requested_type }{ tag }] =~ m{^/?$tag$};
+  }
 }
 
 sub _is {
@@ -176,7 +235,7 @@ sub _is {
 sub _attr_handler {
 	my ( $self, $method ) = _synch_arrays( shift );
 	my $request = shift;
-	my $attr = '';
+	my $attr = {};
 	if ( $self->_is( START_TAG ) ) {
 		$attr = $self->[ $token{ +START_TAG }{ $request } ];
 	}
@@ -191,9 +250,9 @@ sub _synch_arrays {
 	# will not be an identifier like 'S' or 'E'
 	
 	my $array_ref = shift;
-	my $tag_func = GET_TOKEN;
+	my $tag_func  = GET_TOKEN;
 
-	if ( ! grep { $array_ref->[0] eq $_ } keys %token ) {
+	unless ( grep { $array_ref->[0] eq $_ } keys %token ) {
 		# created with get_tag() method, so we need
 		# to munge the array to match the get_token() array
 		# After this is called, and before the method returns, you must
@@ -247,6 +306,10 @@ Specifically, there are 7 C<is_foo> type methods and 5 C<return_bar> type
 methods.  The C<is_> methods allow you to determine the token type and the
 C<return_> methods get the data that you need.
 
+You can also rebuild some tags on the fly.  Frequently, the attributes
+associated with start tags need to be altered, added to, or deleted.  This
+functionality is built in.
+
 Since this is a subclass of C<HTML::TokeParser>, all C<HTML::TokeParser>
 methods are available.  To truly appreciate the power of this module, please
 read the documentation for C<HTML::TokeParser> and C<HTML::Parser>.
@@ -258,7 +321,7 @@ examples.
 
 =over 4
 
-=item * C<is_start_tag>
+=item * C<is_start_tag([$tag])>
 
 Use this to determine if you have a start tag.  An optional "tag type" may be
 passed.  This will allow you to match if it's a I<particular> start tag.  The
@@ -266,7 +329,12 @@ supplied tag is case-insensitive.
 
  if ( $token->is_start_tag( 'font' ) ) { ... }
 
-=item * C<is_end_tag.>
+Optionally, you may pass a regular expression as an argument.  To match all
+header (h1, h2, ... h6) tags:
+
+ if ( $token->is_start_tag( qr/^h[123456]$/ ) ) { ... }
+
+=item * C<is_end_tag([$tag])>
 
 Use this to determine if you have an end tag.  An optional "tag type" may be
 passed.  This will allow you to match if it's a I<particular> end tag.  The
@@ -284,7 +352,9 @@ Or:
    if ( $token->is_end_tag( '/form' ) ) { ... }
  }
 
-=item * C<is_tag>
+Optionally, you may pass a regular expression as an argument.
+
+=item * C<is_tag([$tag])>
 
 Use this to determine if you have any tag.  An optional "tag type" may be
 passed.  This will allow you to match if it's a I<particular> tag.  The
@@ -292,14 +362,16 @@ supplied tag is case-insensitive.
 
  if ( $token->is_tag ) { ... }
 
-=item * C<is_text>
+Optionally, you may pass a regular expression as an argument.
+
+=item * C<is_text()>
 
 Use this to determine if you have text.  Note that this is I<not> to be
 confused with the C<return_text> (I<deprecated>) method described below!
 C<is_text> will identify text that the user typically sees display in the Web
 browser.
 
-=item * C<is_comment>
+=item * C<is_comment()>
 
 Are you still reading this?  Nobody reads POD.  Don't you know you're supposed
 to go to CLPM, ask a question that's answered in the POD and get flamed?  It's
@@ -310,12 +382,12 @@ Really.
 C<is_comment> is used to identify comments.  See the HTML::Parser documentation
 for more information about comments.  There's more than you might think.
 
-=item * C<is_declaration>
+=item * C<is_declaration()>
 
 This will match the DTD at the top of your HTML. (You I<do> use DTD's, don't
 you?)
 
-=item * C<is_process_instruction>
+=item * C<is_process_instruction()>
 
 Process Instructions are from XML.  This is very handy if you need to parse out
 PHP and similar things with a parser.
@@ -337,21 +409,21 @@ C<return_> part.
 
 =over 4
 
-=item * C<return_tag>
+=item * C<return_tag()>
 
 Do you have a start tag or end tag?  This will return the type (lower case).
 
-=item * C<return_attr>
+=item * C<return_attr()>
 
 If you have a start tag, this will return a hash ref with the attribute names
 as keys and the values as the values.
 
-=item * C<return_attrseq>
+=item * C<return_attrseq()>
 
 For a start tag, this is an array reference with the sequence of the
 attributes, if any.
 
-=item * C<return_text>
+=item * C<return_text()>
 
 This method has been deprecated in favor of C<as_is>.  Programmers were getting
 confused over the difference between C<is_text>, C<return_text>, and some
@@ -359,20 +431,67 @@ parser methods such as C<HTML::TokeParser::get_text> and friends.  This
 confusion stems from the fact that your author is a blithering idiot when it
 comes to choosing methods names :)
 
-This method will hang around for a while, but no guarantees (but hey, that's
-what deprecation is, yes?).
+Using this method still succeeds, but will now carp.
 
-=item * C<as_is>
+=item * C<as_is()>
 
 This is the exact text of whatever the token is representing.
 
-=item * C<return_token0>
+=item * C<return_token0()>
 
 For processing instructions, this will return the token found immediately after
 the opening tag.  Example:  For <?php, "php" will be the start of the returned
 string.
 
 =back
+
+=head1 Attribute munging methods
+
+The C<delete_attr()> and C<set_attr()> methods allow the programmer to rewrite
+tag attributes on the fly.  It should be noted that bad HTML will be
+"corrected" by this.  Specifically, the new tag will have all attributes
+lower-cased with the values properly quoted.
+
+Self-closing tags (e.g. E<lt>hr /E<gt>) are also handled correctly.  Some older
+browsers require a space prior to the final slash in a self-closed tag.  If
+such a space is detected in the original HTML, it will be preserved.
+
+=over 4
+
+=item * C<delete_attr($name)>
+
+This method attempts to delete the attribute specified.  It will C<croak> if
+called on anything other than a start tag.  The argument is case-insensitive,
+but must otherwise be an exact match of the attribute you are attempting to
+delete.  If the attribute is not found, the method will return without changing
+the tag.
+
+ # <body bgcolor="#FFFFFF">
+ $token->delete_attr('bgcolor');
+ print $token->as_is;
+ # <body>
+ 
+After this method is called, if successful, the C<as_is()>, C<return_attr()>
+and C<return_attrseq()> methods will all return updated results.
+ 
+=item * C<set_attr($name,$value)>
+
+This method will set the value of an attribute.  If the attribute is not found,
+then C<return_attrseq()> will have the new attribute listed at the end.  Two
+arguments
+
+ # <p>
+ $token->set_attr('class','some_class');
+ print $token->as_is;
+ # <p class="some_class">
+
+ # <body bgcolor="#FFFFFF">
+ $token->set_attr('bgcolor','red');
+ print $token->as_is;
+ # <body bgcolor="red">
+
+After this method is called, if successful, the C<as_is()>, C<return_attr()>
+and C<return_attrseq()> methods will all return updated results.
 
 =head1 Important note:
 
@@ -403,7 +522,7 @@ HTML comments.  You need to get all HTML comments from the HTML.
      print "Processing $doc\n";
      my $p = HTML::TokeParser::Simple->new( $doc );
      while ( my $token = $p->get_token ) {
-         next if ! $token->is_comment;
+         next unless $token->is_comment;
          print PHB $token->as_is, "\n";
      }
  }
@@ -456,31 +575,14 @@ the form tags.  You need to change it to "http://www.bar.com/".
 
      my $p = HTML::TokeParser::Simple->new( $doc );
      while ( my $token = $p->get_token ) {
-         if ( $token->is_start_tag( 'form' ) ) {
-             my $form_tag = new_form_tag( 
-                $token->return_attr, 
-                $token->return_attrseq 
-             );
-             print FILE $form_tag;
+         if ( $token->is_start_tag('form') ) {
+             my $action = $token->return_attr->{action};
+             $action =~ s/www\.foo\.com/www.bar.com/;
+             $token->set_attr('action', $action);
          }
-         else {
-             print FILE $token->as_is;
-         }
+         print FILE $token->as_is;
      }
      close FILE;
- }
-
- sub new_form_tag {
-     my ( $attr, $attrseq ) = @_;
-     if ( exists $attr->{ action } ) {
-         $attr->{ action } =~ s/www\.foo\.com/www.bar.com/;
-     }
-     my $tag = '';
-     foreach ( @$attrseq ) {
-         $tag .= "$_=\"$attr->{ $_ }\" ";
-     }
-     $tag = "<form $tag>";
-     return $tag;
  }
 
 =head1 COPYRIGHT
@@ -488,14 +590,6 @@ the form tags.  You need to change it to "http://www.bar.com/".
 Copyright (c) 2001 Curtis "Ovid" Poe.  All rights reserved.  This program is
 free software; you may redistribute it and/or modify it under the same terms as
 Perl itself
-
-=head1 TODO
-
-Considering overloading some methods to allow multiple parameters to be tested.
-May add support for regexen.  For example:
-
-  if ( $token->is_start_tag( qw/ h1 h2 h3 h4 h5 h6 / ) {...}
-  if ( $token->is_start_tag( qr/h[1..6]/ ) {...}
 
 =head1 AUTHOR
 
@@ -507,6 +601,15 @@ Use of C<$HTML::Parser::VERSION> which is less than 3.25 may result in
 incorrect behavior as older versions do not always handle XHTML correctly.  It
 is the programmer's responsibility to verify that the behavior of this code
 matches the programmer's needs.
+
+Note that C<HTML::Parser> processes text in 512 byte chunks.  This sometimes
+will cause strange behavior and cause text to be broken into more than one
+token.  You can suppress this behavior with the following command:
+
+ $p->unbroken_text( [$bool] );
+
+See the C<HTML::Parser> documentation and
+http://www.perlmonks.org/index.pl?node_id=230667 for more information.
 
 Address bug reports and comments to: L<poec@yahoo.com>.  When sending bug
 reports, please provide the version of C<HTML::Parser>, C<HTML::TokeParser>,

@@ -3,6 +3,7 @@ Simple.pm
 MANIFEST
 Makefile.PL
 README
+reload
 t/get_tag.t
 t/get_token.t
 
