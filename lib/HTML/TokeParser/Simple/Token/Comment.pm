@@ -3,7 +3,7 @@ package HTML::TokeParser::Simple::Token::Comment;
 use strict;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: Comment.pm,v 1.3 2004/09/25 23:36:53 ovid Exp $';
+$REVISION = '$Id: Comment.pm,v 1.4 2005/10/08 19:45:55 ovid Exp $';
 $VERSION  = '1.0';
 use base 'HTML::TokeParser::Simple::Token';
 
@@ -30,7 +30,15 @@ HTML::TokeParser::Simple::Token::Comment - Token.pm comment class.
 
 =head1 DESCRIPTION
 
-This is the class for comment tokens.  The only behavioral change is that
-C<is_comment()> returns true.
+This is the class for comment tokens.
 
 See L<HTML::Parser> for detailed information about comments.
+
+=head1 OVERRIDDEN METHODS
+
+=head2 is_comment
+
+C<is_comment()> will return true if the token is the DTD at the top of the
+HTML.
+
+=cut

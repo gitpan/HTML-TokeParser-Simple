@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
-use Test::More tests => 50;
+use Test::More tests => 56;
 #use Test::More 'no_plan';
 
 my $CLASS;
@@ -36,6 +36,16 @@ is( $token->get_tag, 'html',      '... and it should return the correct tag' );
 
 can_ok($token, 'return_tag');
 is( $token->return_tag, 'html',   '... and calling this deprecated method should return the correct tag' );
+
+can_ok($p, 'peek');
+is $p->peek, $p->peek,            '... and calling it should not change the state of the parser';
+is $p->peek(1000), $p->peek(1000),'... even if we try to peek beyond the end of the document';
+like $p->peek, qr/^\s+$/,         'Calling peek without arguments should return the next token';
+like $p->peek(4), qr/^\s+<head>\s+<!-- This is a comment -->/,
+                                  '... and passing an integer value should return the next X tokens';
+eval { $p->peek('html') };
+like $@, qr/^\QArgument to peek() must be a positive integer, not (html)/,
+                                  '... but passing it a non-integer value should croak';
 
 # important to remember that whitespace counts as a token.
 $token = $p->get_token for  1 .. 4; 

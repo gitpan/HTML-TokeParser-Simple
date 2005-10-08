@@ -1,7 +1,6 @@
 package HTML::TokeParser::Simple;
 
 use strict;
-use Carp;
 use HTML::TokeParser;
 use HTML::TokeParser::Simple::Token;
 use HTML::TokeParser::Simple::Token::Tag;
@@ -14,8 +13,8 @@ use HTML::TokeParser::Simple::Token::ProcessInstruction;
 
 use vars qw/ @ISA $VERSION $REVISION /;
 
-$REVISION = '$Id: Simple.pm,v 1.8 2004/09/25 23:37:21 ovid Exp $';
-$VERSION  = '3.13';
+$REVISION = '$Id: Simple.pm,v 1.9 2005/10/08 19:45:55 ovid Exp $';
+$VERSION  = '3.14';
 @ISA = qw/ HTML::TokeParser /;
 
 # constructors
@@ -28,6 +27,12 @@ my %FACTORY_CLASSES = (
     D   => 'HTML::TokeParser::Simple::Token::Declaration',
     PI  => 'HTML::TokeParser::Simple::Token::ProcessInstruction',
 );
+
+sub _croak {
+    my ($proto, $message) = @_;
+    require Carp;
+    Carp::croak($message);
+}
 
 sub new {
     my ($class, @args) = @_;
@@ -44,14 +49,15 @@ sub _init {
         string => sub { \$source },
         url    => sub {
             eval "require LWP::Simple";
-            croak("Cannot load LWP::Simple: $@") if $@;
+            $class->_croak("Cannot load LWP::Simple: $@") if $@;
             my $content = LWP::Simple::get($source);
-            croak"Could not fetch content from ($source)" unless defined $content;
+            $class->_croak("Could not fetch content from ($source)")
+                unless defined $content;
             return \$content;
         },
     );
     unless (exists $sources{$source_type}) {
-        croak("Unknown source type ($source_type)");
+        $class->_croak("Unknown source type ($source_type)");
     }
     return $class->new($sources{$source_type}->());
 }
@@ -66,7 +72,7 @@ sub get_token {
     }
     else {
         # this should never happen
-        croak("Cannot determine token class for token (@$token)");
+        $self->_croak("Cannot determine token class for token (@$token)");
     }
 }
 
@@ -78,6 +84,25 @@ sub get_tag {
     return $token->[0] =~ /^\//
         ?  HTML::TokeParser::Simple::Token::Tag::End->new($token)
         :  HTML::TokeParser::Simple::Token::Tag::Start->new($token);
+}
+
+sub peek {
+    my ($self, $count) = @_;
+    $count  ||= 1;
+    
+    unless ($count =~ /^\d+$/) {
+        $self->_croak("Argument to peek() must be a positive integer, not ($count)");
+    }
+
+    my $items = 0;
+    my $html  = '';
+    my @tokens;
+    while ( $items++ < $count && defined ( my $token = $self->get_token ) ) {
+        $html .= $token->as_is;
+        push @tokens, $token;
+    }
+    $self->unget_token(@tokens);
+    return $html;
 }
 
 1;
@@ -157,7 +182,36 @@ As a convenience, you can also attempt to fetch the HTML directly from a URL.
 This method relies on C<LWP::Simple>.  If this module is not found or the page
 cannot be fetched, the constructor will C<croak()>.
 
+=head1 PARSER METHODS
+
+=head2 get_token
+
+This method will return the next token that C<HTML::TokeParser::get_token()>
+method would return.  However, it will be blessed into a class appropriate
+which represents the token type.
+
+=head2 get_tag
+
+This method will return the next token that C<HTML::TokeParser::get_tag()>
+method would return.  However, it will be blessed into either the
+L<HTML::TokeParser::Simple::Token::Tag::Start> or
+L<HTML::TokeParser::Simple::Token::Tag::End> class.
+
+=head2 peek
+
+As of version C<3.14>, you can now C<peek()> at the upcomings tokens without
+affecting the state of the parser.  By default, C<peek()> will return the text
+of the next token, but specifying an integer C<$count> will return the text of
+the next C<$count> tokens.
+
+This is useful when you're trying to debug where you are in a document.
+
+ warn $parser->peek(3); # show the next 3 tokens
+
 =head1 ACCESSORS
+
+The following methods may be called on the token object which is returned,
+not on the parser object.
 
 =head2 Boolean Accessors
 
@@ -259,6 +313,8 @@ example, calling C<return_tag()> actually calls C<get_tag()> internally.
 =item * C<get_tag()>
 
 Do you have a start tag or end tag?  This will return the type (lower case).
+Note that this is I<not> the same as the C<get_tag()> method on the actual
+parser object.
 
 =item * C<get_attr([$attribute])>
 

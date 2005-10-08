@@ -1,16 +1,27 @@
 package HTML::TokeParser::Simple::Token;
 
 use strict;
-use Carp;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: Token.pm,v 1.4 2004/09/19 21:11:51 ovid Exp $';
+$REVISION = '$Id: Token.pm,v 1.5 2005/10/08 19:45:55 ovid Exp $';
 $VERSION  = '3.0';
 
 sub new {
     my ($class, $token) = @_;
-    croak("This class should not be instantiated") if __PACKAGE__ eq $class;
+    $class->_croak("This class should not be instantiated") if __PACKAGE__ eq $class;
     return bless $token, $class;
+}
+
+sub _croak {
+    my ($proto, $message) = @_;
+    require Carp;
+    Carp::croak($message);
+}
+
+sub _carp {
+    my ($proto, $message) = @_;
+    require Carp;
+    Carp::carp($message);
 }
 
 sub is_tag         {}
@@ -37,7 +48,8 @@ sub return_token0  {}  # deprecated
 # get_foo methods
 
 sub return_text {
-    carp('return_text() is deprecated.  Use as_is() instead');
+    my ($self) = @_;
+    $self->_carp('return_text() is deprecated.  Use as_is() instead');
     goto &as_is;
 }
 
@@ -49,7 +61,8 @@ __END__
 
 =head1 NAME
 
-HTML::TokeParser::Simple::Token - Base class for C<HTML::TokeParser::Simple> tokens.
+HTML::TokeParser::Simple::Token - Base class for C<HTML::TokeParser::Simple>
+tokens.
 
 =head1 SYNOPSIS
 
@@ -64,5 +77,57 @@ HTML::TokeParser::Simple::Token - Base class for C<HTML::TokeParser::Simple> tok
 
 =head1 DESCRIPTION
 
-This is the base class for all returned tokens.  It should never be instantiated
-directly.  In fact, it will C<croak()> if it is.
+This is the base class for all returned tokens.  It should never be
+instantiated directly.  In fact, it will C<croak()> if it is.
+
+=head1 METHODS
+
+The following list of methods are provided by this class.  Most of these are
+stub methods which must be overridden in a subclass.  See 
+L<HTML::TokeParser::Simple> for descriptions of these methods.
+
+=over 4
+
+=item * as_is
+
+=item * delete_attr
+
+=item * get_attr
+
+=item * get_attrseq
+
+=item * get_tag
+
+=item * get_token0
+
+=item * is_comment
+
+=item * is_declaration
+
+=item * is_end_tag
+
+=item * is_pi
+
+=item * is_process_instruction
+
+=item * is_start_tag
+
+=item * is_tag
+
+=item * is_text
+
+=item * return_attr
+
+=item * return_attrseq
+
+=item * return_tag
+
+=item * return_text
+
+=item * return_token0
+
+=item * rewrite_tag
+
+=item * set_attr
+
+=back

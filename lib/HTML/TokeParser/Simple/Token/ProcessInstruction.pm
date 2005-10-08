@@ -1,10 +1,9 @@
 package HTML::TokeParser::Simple::Token::ProcessInstruction;
 
 use strict;
-use Carp;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: ProcessInstruction.pm,v 1.1 2004/09/19 21:12:24 ovid Exp $';
+$REVISION = '$Id: ProcessInstruction.pm,v 1.2 2005/10/08 19:45:55 ovid Exp $';
 $VERSION  = '2.0';
 use base 'HTML::TokeParser::Simple::Token';
 
@@ -46,3 +45,19 @@ Currently, there appear to be some problems with process instructions.  You can
 override this class if you need finer grained handling of process instructions.
 
 C<is_pi()> and C<is_process_instruction()> both return true.
+
+=head1 OVERRIDDEN METHODS
+
+=over 4
+
+=item * get_token0
+
+=item * is_pi
+
+=item * is_process_instruction
+
+=item * return_token0
+
+=back
+
+=cut

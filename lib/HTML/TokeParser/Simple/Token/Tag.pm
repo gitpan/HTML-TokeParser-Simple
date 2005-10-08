@@ -1,10 +1,9 @@
 package HTML::TokeParser::Simple::Token::Tag;
 
 use strict;
-use Carp;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: Tag.pm,v 1.4 2004/09/19 23:38:35 ovid Exp $';
+$REVISION = '$Id: Tag.pm,v 1.5 2005/10/08 19:45:55 ovid Exp $';
 $VERSION  = '1.2';
 use base 'HTML::TokeParser::Simple::Token';
 
@@ -12,7 +11,7 @@ my %INSTANCE;
 
 sub new {
     my ($class, $object) = @_;
-    croak("This is a base class that should not be instantiated") 
+    $class->_croak("This is a base class that should not be instantiated") 
         if __PACKAGE__ eq $class;
     my $self = bless $object, $class;
     $self->_init;
@@ -68,3 +67,18 @@ HTML::TokeParser::Simple::Token::Tag - Token.pm tag class.
 This is the base class for start and end tokens.  It should not be
 instantiated.  See C<HTML::TokeParser::Simple::Token::Tag::Start> and
 C<HTML::TokeParser::Simple::Token::Tag::End> for details.
+
+=head1 OVERRIDDEN METHODS
+
+The following list of methods are provided by this class.  See
+L<HTML::TokeParser::Simple> for descriptions of these methods.
+
+=over 4
+
+=item * as_is
+
+=item * get_tag
+
+=item * return_text
+
+=back

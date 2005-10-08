@@ -3,7 +3,7 @@ package HTML::TokeParser::Simple::Token::Text;
 use strict;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: Text.pm,v 1.2 2004/09/25 23:36:53 ovid Exp $';
+$REVISION = '$Id: Text.pm,v 1.3 2005/10/08 19:45:55 ovid Exp $';
 $VERSION  = '1.0';
 use base 'HTML::TokeParser::Simple::Token';
 
@@ -34,5 +34,17 @@ HTML::TokeParser::Simple::Token::Text - Token.pm text class.
 
 =head1 DESCRIPTION
 
-This is an internal class that users should not worry about.  See the
-C<HTML::TokeParser::Simple> documentation for details.
+This class represents "text" tokens.  See the C<HTML::TokeParser::Simple>
+documentation for details.
+
+=head1 OVERRIDDEN METHODS
+
+=over 4
+
+=item * as_is
+
+=item * is_text
+
+=back
+
+=cut

@@ -1,3 +1,4 @@
+Build.PL
 Changes
 lib/HTML/TokeParser/Simple.pm
 lib/HTML/TokeParser/Simple/Token.pm
@@ -18,3 +19,5 @@ t/02munge_html.t
 t/03constructor.t
 t/04internals.t
 t/data/test.html
+t/pod-coverage.t
+t/pod.t

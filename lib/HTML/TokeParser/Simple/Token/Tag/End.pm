@@ -1,10 +1,9 @@
 package HTML::TokeParser::Simple::Token::Tag::End;
 
 use strict;
-use Carp;
 
 use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: End.pm,v 1.2 2004/09/25 23:36:53 ovid Exp $';
+$REVISION = '$Id: End.pm,v 1.3 2005/10/08 19:45:55 ovid Exp $';
 $VERSION  = '1.0';
 use base 'HTML::TokeParser::Simple::Token::Tag';
 
@@ -116,3 +115,21 @@ HTML::TokeParser::Simple::Token::Tag::End - Token.pm "end tag" class.
 
 This class does most of the heavy lifting for C<HTML::TokeParser::Simple>.  See
 the C<HTML::TokeParser::Simple> docs for details.
+
+=head1 OVERRIDDEN METHODS
+
+=over 4
+
+=item * as_is
+
+=item * get_tag
+
+=item * is_end_tag
+
+=item * is_tag
+
+=item * return_text
+
+=item * rewrite_tag
+
+=cut
