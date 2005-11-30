@@ -7,6 +7,8 @@ $REVISION = '$Id: Start.pm,v 1.2 2005/10/08 19:45:55 ovid Exp $';
 $VERSION  = '1.0';
 use base 'HTML::TokeParser::Simple::Token::Tag';
 
+use HTML::Entities qw/encode_entities/;
+
 my %TOKEN = (
     tag     => 1,
     attr    => 2,
@@ -98,7 +100,7 @@ sub rewrite_tag {
     my $tag = '';
     foreach ( @$attrseq ) {
         next if $_ eq '/'; # is this a bug in HTML::TokeParser?
-        $tag .= sprintf qq{ %s="%s"} => $_, $attr->{$_};
+        $tag .= sprintf qq{ %s="%s"} => $_, encode_entities($attr->{$_});
     }
     my $first = $self->is_end_tag ? '/' : '';
     $tag = sprintf '<%s%s%s%s>', $first, $self->get_tag, $tag, $self_closing;

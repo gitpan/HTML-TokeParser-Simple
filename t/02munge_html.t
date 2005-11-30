@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
-use Test::More tests => 21;
+use Test::More tests => 24;
 #use Test::More 'no_plan';
 
 my $CLASS;
@@ -82,6 +82,13 @@ while (my $token = $parser->get_token) {
     $new_html .= $token->as_is;
 }
 is($new_html, $fixed_html,        '... and it should correctly rewrite all tags');
+
+$html = '<span title="with &quot;kwotes&quot; inside">';
+$parser = HTML::TokeParser::Simple->new(\$html);
+my $span = $parser->get_tag('span');
+is $span->as_is, $html, 'We should be able to fetch tags with escaped attributes';
+ok $span->rewrite_tag, '... and rewriting said tags should succeed';
+is $span->as_is, $html, '... and the attributes should be properly escaped';
 
 sub fetch_html {
     my $html = <<'    END_HTML';

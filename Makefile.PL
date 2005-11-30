@@ -2,16 +2,16 @@
 use ExtUtils::MakeMaker;
 WriteMakefile
 (
-  'PL_FILES' => {},
-  'INSTALLDIRS' => 'site',
   'NAME' => 'HTML::TokeParser::Simple',
-  'EXE_FILES' => [],
   'VERSION_FROM' => 'lib/HTML/TokeParser/Simple.pm',
   'PREREQ_PM' => {
-    'Test::More' => 0,
-    'HTML::TokeParser' => '2.24',
     'HTML::Parser' => '3.25',
-    'Sub::Override' => 0
-  }
+    'HTML::TokeParser' => '2.24',
+    'Sub::Override' => '0',
+    'Test::More' => '0'
+  },
+  'INSTALLDIRS' => 'site',
+  'EXE_FILES' => [],
+  'PL_FILES' => {}
 )
 ;
