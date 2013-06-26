@@ -2,9 +2,7 @@ package HTML::TokeParser::Simple::Token::Tag::End;
 
 use strict;
 
-use vars qw/ $VERSION $REVISION /;
-$REVISION = '$Id: End.pm,v 1.3 2005/10/08 19:45:55 ovid Exp $';
-$VERSION  = '1.0';
+our $VERSION  = '3.16';
 use base 'HTML::TokeParser::Simple::Token::Tag';
 
 my %TOKEN = (
@@ -131,5 +129,7 @@ the C<HTML::TokeParser::Simple> docs for details.
 =item * return_text
 
 =item * rewrite_tag
+
+=back
 
 =cut
